@@ -22,191 +22,67 @@
 
 DOCUMENTATION = '''
 ---
-module: uri
-short_description: Interacts with webservices
-description:
-  - Interacts with HTTP and HTTPS web services and supports Digest, Basic and WSSE
-    HTTP authentication mechanisms.
-version_added: "1.1"
-options:
-  url:
-    description:
-      - HTTP or HTTPS URL in the form (http|https)://host.domain[:port]/path
-    required: true
-    default: null
-  dest:
-    description:
-      - path of where to download the file to (if desired). If I(dest) is a
-        directory, the basename of the file on the remote server will be used.
-    required: false
-    default: null
-  user:
-    description:
-      - username for the module to use for Digest, Basic or WSSE authentication.
-    required: false
-    default: null
-  password:
-    description:
-      - password for the module to use for Digest, Basic or WSSE authentication.
-    required: false
-    default: null
-  body:
-    description:
-      - The body of the http request/response to the web service. If C(body_format) is set
-        to 'json' it will take an already formatted JSON string or convert a data structure
-        into JSON.
-    required: false
-    default: null
-  body_format:
-    description:
-      - The serialization format of the body. When set to json, encodes the
-        body argument, if needed, and automatically sets the Content-Type header accordingly.
-    required: false
-    choices: [ "raw", "json" ]
-    default: raw
-    version_added: "2.0"
-  method:
-    description:
-      - The HTTP method of the request or response. It MUST be uppercase.
-    required: false
-    choices: [ "GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "PATCH", "TRACE", "CONNECT", "REFRESH" ]
-    default: "GET"
-  return_content:
-    description:
-      - Whether or not to return the body of the request as a "content" key in
-        the dictionary result. If the reported Content-type is
-        "application/json", then the JSON is additionally loaded into a key
-        called C(json) in the dictionary results.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
-  force_basic_auth:
-    description:
-      - The library used by the uri module only sends authentication information when a webservice
-        responds to an initial request with a 401 status. Since some basic auth services do not properly
-        send a 401, logins will fail. This option forces the sending of the Basic authentication header
-        upon initial request.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
-  follow_redirects:
-    description:
-      - Whether or not the URI module should follow redirects. C(all) will follow all redirects.
-        C(safe) will follow only "safe" redirects, where "safe" means that the client is only
-        doing a GET or HEAD on the URI to which it is being redirected. C(none) will not follow
-        any redirects. Note that C(yes) and C(no) choices are accepted for backwards compatibility,
-        where C(yes) is the equivalent of C(all) and C(no) is the equivalent of C(safe). C(yes) and C(no)
-        are deprecated and will be removed in some future version of Ansible.
-    required: false
-    choices: [ "all", "safe", "none" ]
-    default: "safe"
-  creates:
-    description:
-      - a filename, when it already exists, this step will not be run.
-    required: false
-  removes:
-    description:
-      - a filename, when it does not exist, this step will not be run.
-    required: false
-  status_code:
-    description:
-      - A valid, numeric, HTTP status code that signifies success of the
-        request. Can also be comma separated list of status codes.
-    required: false
-    default: 200
-  timeout:
-    description:
-      - The socket level timeout in seconds
-    required: false
-    default: 30
-  HEADER_:
-    description:
-      - Any parameter starting with "HEADER_" is a sent with your request as a header.
-        For example, HEADER_Content-Type="application/json" would send the header
-        "Content-Type" along with your request with a value of "application/json".
-        This option is deprecated as of C(2.1) and may be removed in a future
-        release. Use I(headers) instead.
-    required: false
-    default: null
-  headers:
-    description:
-        - Add custom HTTP headers to a request in the format of a YAML hash
-    required: false
-    default: null
-    version_added: '2.1'
-  others:
-    description:
-      - all arguments accepted by the M(file) module also work here
-    required: false
-  validate_certs:
-    description:
-      - If C(no), SSL certificates will not be validated.  This should only
-        set to C(no) used on personally controlled sites using self-signed
-        certificates.  Prior to 1.9.2 the code defaulted to C(no).
-    required: false
-    default: 'yes'
-    choices: ['yes', 'no']
-    version_added: '1.9.2'
-notes:
-  - The dependency on httplib2 was removed in Ansible 2.1
-author: "Romeo Theriault (@romeotheriault)"
+This module is
+Same as for uri module + following parameters related to Akamai {Open} API
+(Credentials created https://control.akamai.com > Main > Configure > Manage APIs)
+        secret: "CVaFP9v014j174z5X2xxxxxxxxxxxxxxxxxxxxxxxxxx" (Alias: client_secret)
+        host: "https://akab-k5ccw5obhul4ujrz-7uxaqutr53o2274g.luna.akamaiapis.net" (alias: api_host)
+        access_token: "akab-q5k4krpwxpa3ol73-xxxxxxxxxxxxxxxx"
+        client_token: "akab-v2lbouodealtjk32-xxxxxxxxxxxxxxxx"
+
+        url: <full URL for request or relative url path which will be joined with "https://" + host + /url/path>
+
 '''
 
 EXAMPLES = '''
-# Check that you can connect (GET) to a page and it returns a status 200
-- uri: url=http://www.example.com
+     - name: Get properties
+       edgegrid:
+        url: "/papi/v0/properties/?contractId=ctr_3-TE78Q&groupId=grp_89061"
+        return_content: yes
+        validate_certs: True
+        secret: "CVaFP9v014j174z5X2xxxxxxxxxxxxxxxxxxxxxxxxxx"
+        host: "https://akab-k5ccw5obhul4ujrz-7uxaqutr53o2274g.luna.akamaiapis.net"
+        access_token: "akab-q5k4krpwxpa3ol73-xxxxxxxxxxxxxxxx"
+        client_token: "akab-v2lbouodealtjk32-xxxxxxxxxxxxxxxx"
+        connection: local
+       register: response
+     - debug: var=response.json
 
-# Check that a page returns a status 200 and fail if the word AWESOME is not
-# in the page contents.
-- action: uri url=http://www.example.com return_content=yes
-  register: webpage
+     - name: Get property versions
+       edgegrid:
+        url: "/papi/v0/properties/prp_334241/versions/?contractId=ctr_3-TE78Q&groupId=grp_89061"
+        return_content: yes
+        validate_certs: True
+        secret: "CVaFP9v014j174z5X2xxxxxxxxxxxxxxxxxxxxxxxxxx"
+        host: "https://akab-k5ccw5obhul4ujrz-7uxaqutr53o2274g.luna.akamaiapis.net"
+        access_token: "akab-q5k4krpwxpa3ol73-xxxxxxxxxxxxxxxx"
+        client_token: "akab-v2lbouodealtjk32-xxxxxxxxxxxxxxxx"
+        connection: local
+       register: response
+     - debug: var=response.json
 
-- action: fail
-  when: "'AWESOME' not in webpage.content"
+     - name: POST request
+       edgegrid:
+        url: "/papi/v0/properties/?contractId=ctr_3-TE78Q&groupId=grp_89061"
+        return_content: yes
+        method: POST
+        body: "{{ lookup('file','post.json') }}"
+        body_format: json
+        secret: "CVaFP9v014j174z5X2xxxxxxxxxxxxxxxxxxxxxxxxxx"
+        host: "https://akab-k5ccw5obhul4ujrz-7uxaqutr53o2274g.luna.akamaiapis.net"
+        access_token: "akab-q5k4krpwxpa3ol73-xxxxxxxxxxxxxxxx"
+        client_token: "akab-v2lbouodealtjk32-xxxxxxxxxxxxxxxx"
+        connection: local
+        status_code: 201
+        timeout: 120
+       register: response
+     - debug: var=response
 
-
-# Create a JIRA issue
-- uri:
-    url: https://your.jira.example.com/rest/api/2/issue/
-    method: POST
-    user: your_username
-    password: your_pass
-    body: "{{ lookup('file','issue.json') }}"
-    force_basic_auth: yes
-    status_code: 201
-    body_format: json
-
-# Login to a form based webpage, then use the returned cookie to
-# access the app in later tasks
-
-- uri:
-    url: https://your.form.based.auth.example.com/index.php
-    method: POST
-    body: "name=your_username&password=your_password&enter=Sign%20in"
-    status_code: 302
-    HEADER_Content-Type: "application/x-www-form-urlencoded"
-  register: login
-
-- uri:
-    url: https://your.form.based.auth.example.com/dashboard.php
-    method: GET
-    return_content: yes
-    HEADER_Cookie: "{{login.set_cookie}}"
-
-# Queue build of a project in Jenkins:
-- uri:
-    url: "http://{{ jenkins.host }}/job/{{ jenkins.job }}/build?token={{ jenkins.token }}"
-    method: GET
-    user: "{{ jenkins.user }}"
-    password: "{{ jenkins.password }}"
-    force_basic_auth: yes
-    status_code: 201
 
 '''
 
 import cgi
 import datetime
-import os
 import shutil
 import tempfile
 
@@ -230,8 +106,7 @@ else:
      import urlparse as parse
 
 import os
-import logging
-from pprint import pformat
+
 try:
    from akamai.edgegrid import EdgeGridAuth
    from akamai.edgegrid import EdgeRc
@@ -244,15 +119,10 @@ make a request.
 Please run this command to install the required library:
 
 pip install edgegrid-python""")
-logging.basicConfig()
-log = logging.getLogger(__name__)
-log.level = logging.INFO
 
 class MockRequest:
     def __init__(self, body, headers, method, url):
-#        self.body = self.get_data(data_ascii, data_binary)
         self.body = body
-        log.info("body: %s", self.body)
         self.headers= headers or {}
         self.method = method
         self.url = url
@@ -272,8 +142,6 @@ def gen_auth_headers(access_token, client_secret, client_token, url, method, hea
     r = MockRequest(body, headers_to_sign, method, url)
     auth(r)
     auth_header = r.headers['Authorization']
-    log.info("Authorization header: %s", auth_header)
-
     return auth_header
 
 def write_file(module, url, dest, content):
@@ -480,7 +348,6 @@ def main():
 
 
     #Get akamai auth header
-    pydevd.settrace('192.168.156.1', port=33333, stdoutToServer=True, stderrToServer=True)
     dict_headers['Authorization'] = gen_auth_headers(access_token,
                                                      client_secret,
                                                      client_token,
