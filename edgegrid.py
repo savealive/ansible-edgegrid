@@ -279,7 +279,7 @@ def main():
         url_username = dict(required=False, default=None, aliases=['user']),
         url_password = dict(required=False, default=None, aliases=['password']),
         body = dict(required=False, default=None, type='raw'),
-        body_format = dict(required=False, default='raw', choices=['raw', 'json']),
+        body_format = dict(required=False, default='json', choices=['raw', 'json']),
         method = dict(required=False, default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS', 'PATCH', 'TRACE', 'CONNECT', 'REFRESH']),
         return_content = dict(required=False, default='no', type='bool'),
         follow_redirects = dict(required=False, default='safe', choices=['all', 'safe', 'none', 'yes', 'no']),
@@ -302,7 +302,7 @@ def main():
     )
     url = module.params['url']
     api_host = module.params['api_host']
-    url  = parse.urljoin(api_host, url, allow_fragments=True)
+    url = parse.urljoin(api_host, url, allow_fragments=True)
     body = module.params['body']
     body_format = module.params['body_format'].lower()
     method = module.params['method']
@@ -391,12 +391,15 @@ def main():
 
     # Default content_encoding to try
     content_encoding = 'utf-8'
+ #   import pydevd
+ #   pydevd.settrace('192.168.156.1', port=33333, stdoutToServer=True, stderrToServer=True)
     if 'content_type' in uresp:
         content_type, params = cgi.parse_header(uresp['content_type'])
         if 'charset' in params:
             content_encoding = params['charset']
         u_content = to_text(content, encoding=content_encoding)
-        if 'application/json' in content_type or 'text/json' in content_type:
+        if 'application/json' in content_type or 'text/json' in content_type\
+                or 'application/problem+json' in content_type:
             try:
                 js = json.loads(u_content)
                 uresp['json'] = js
